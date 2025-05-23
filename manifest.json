@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "AI Résumé Builder",
+  "version": "0.1.1",
+  "description": "Generate a résumé from current page content using the OpenAI API.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://api.openai.com/*"],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "public/popup.html",
+    "default_title": "AI Résumé Builder"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/*.txt",
+        "src/project_info/*.txt"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
