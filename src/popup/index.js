@@ -8,15 +8,47 @@ function App () {
 
     async function exportPdf() {
         const container = document.getElementById('resumeContainer');
+        if (!container) return;
+
+        // temporarily expand container so html2canvas captures all content
+        const prevMaxHeight = container.style.maxHeight;
+        const prevOverflow = container.style.overflowY;
+        container.style.maxHeight = 'none';
+        container.style.overflowY = 'visible';
+
+        await new Promise(r => setTimeout(r, 0));
+
     // 1) Render HTML to canvas
         const canvas = await html2canvas(container, { scale: 2 });
+
+        // restore original styles
+        container.style.maxHeight = prevMaxHeight;
+        container.style.overflowY = prevOverflow;
+
         const imgData = canvas.toDataURL('image/png');
     // 2) Create PDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
         const pageW = pdf.internal.pageSize.getWidth();
-        const pageH = (canvas.height * pageW) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pageW, pageH);
+        const pageH = pdf.internal.pageSize.getHeight();
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const ratio = pageW / imgW;
+        const imgScaledH = imgH * ratio;
+
+        let position = 0;
+        let heightLeft = imgScaledH;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pageW, imgScaledH);
+        heightLeft -= pageH;
+
+        while (heightLeft > 0) {
+            position -= pageH;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pageW, imgScaledH);
+            heightLeft -= pageH;
+        }
+
     // 3) Trigger download
         pdf.save('resume.pdf');
     }
